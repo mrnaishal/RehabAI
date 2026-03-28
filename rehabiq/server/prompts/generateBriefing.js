@@ -8,87 +8,78 @@ function buildBriefingPrompt(clientProfile) {
     .map(
       (s) => `
 SESSION ${s.sessionNumber} (${s.date}):
-DAP Data: ${s.dapNote.data}
-Assessment: ${s.dapNote.assessment}
-Plan: ${s.dapNote.plan}
-Mood: ${(s.tags.moodIndicators || []).join(", ")}
-Triggers: ${(s.tags.triggersIdentified || []).join(", ") || "None"}
-Coping: ${(s.tags.copingStrategiesDiscussed || []).join(", ")}
-Support: ${s.tags.supportNetworkChanges || "No changes"}
-Risk: ${(s.tags.riskIndicators || []).join(", ") || "None"}
+DAP Note - Data: ${s.dapNote.data}
+DAP Note - Assessment: ${s.dapNote.assessment}
+DAP Note - Plan: ${s.dapNote.plan}
+Mood: ${s.tags.moodIndicators.join(", ")}
+Triggers: ${s.tags.triggersIdentified.join(", ") || "None identified"}
+Coping: ${s.tags.copingStrategiesDiscussed.join(", ")}
+Support Network: ${s.tags.supportNetworkChanges}
+Risk Indicators: ${s.tags.riskIndicators.join(", ") || "None"}
 Sentiment: ${s.tags.sessionSentiment}
-Quotes: ${(s.tags.keyQuotes || []).join(" | ")}
-Follow-ups: ${(s.followUpFlags || []).join("; ")}
+Key Quotes: ${s.tags.keyQuotes.join(" | ")}
+Follow-ups: ${s.followUpFlags.join("; ")}
 `
     )
     .join("\n---\n");
 
-  const systemPrompt = `You are a clinical intelligence assistant preparing a rehabilitation counselor for their next session. You generate TWO outputs:
-1. A QUICK GLANCE (30-second scan before walking into session)
-2. A FULL BRIEFING (detailed analysis if they have more time)
+  const systemPrompt = `You are a clinical intelligence assistant preparing a rehabilitation counselor for their next session with a client. You analyze the full session history and generate a concise, actionable briefing.
 
-RULES:
-- Quick Glance must be scannable in 30 seconds — short phrases, not sentences
-- Cite specific session numbers in the Full Briefing
-- Frame suggestions as "Consider..." — never directives
-- Highlight both concerns AND strengths
-- Be clinically precise but concise
+CRITICAL RULES:
+- Be concise — counselors read this in 2-3 minutes before walking into a session
+- ALWAYS cite specific session numbers when referencing patterns (e.g., "In sessions 7 and 8...")
+- Frame all suggestions as "Consider..." or "You might explore..." — NEVER tell the counselor what to do
+- Connect dots across sessions that individual notes might not reveal
+- If data is insufficient for a pattern, say so rather than speculating
+- Highlight both concerns AND strengths — don't make every briefing feel alarming
+- Use clinical language but keep it scannable
 
-Respond in VALID JSON only. No markdown, no backticks, no preamble.`;
+You must respond in VALID JSON only. No markdown, no backticks, no preamble.`;
 
   const userPrompt = `Generate a pre-session briefing for this client.
 
-CLIENT: ${clientProfile.name}, ${clientProfile.age}yo ${clientProfile.gender}
-DIAGNOSIS: ${clientProfile.diagnosis}
-CO-OCCURRING: ${clientProfile.coOccurring || "None"}
-PROGRAM: ${clientProfile.programType} • Day ${clientProfile.programDay}
-MAT: ${clientProfile.mat || "None"}
+CLIENT PROFILE:
+- Name: ${clientProfile.name}
+- Age: ${clientProfile.age}
+- Diagnosis: ${clientProfile.diagnosis}
+- Co-occurring: ${clientProfile.coOccurring || "None documented"}
+- Program: ${clientProfile.programType}
+- Program Day: ${clientProfile.programDay}
+- MAT: ${clientProfile.mat || "None"}
 
-OBJECTIVES:
-${(clientProfile.treatmentPlan?.objectives || [])
-  .map((o) => `- [${o.id || "obj"}] [${o.status}] ${o.description}`)
+TREATMENT PLAN OBJECTIVES:
+${clientProfile.treatmentPlan.objectives
+  .map((o) => `- [${o.id}] [${o.status}] ${o.description} (target: ${o.targetDate})`)
   .join("\n")}
 
-SESSION HISTORY:
+COMPLETE SESSION HISTORY:
 ${sessionsContext}
 
-Generate this JSON:
+Generate the following JSON:
 {
-  "quickGlance": {
-    "oneLiner": "One sentence: where this client is RIGHT NOW (max 15 words)",
-    "riskScore": "low | moderate | elevated | high",
-    "trajectory": "improving | stable | declining | mixed",
-    "topPriority": "The single most important thing for this session (max 12 words)",
-    "keyFlags": ["3-5 short flags, max 8 words each, most urgent first"],
-    "lastSessionHighlight": "One key thing from the last session (max 15 words)"
-  },
-  "fullBriefing": {
-    "clientSnapshot": "2-3 sentences about where client is in their recovery journey.",
-    "recentTrajectory": "3-4 sentences about what's happened across recent sessions with mood/engagement trend.",
-    "patternAlerts": [
-      {
-        "type": "concern | positive | neutral",
-        "title": "Short pattern title (max 10 words)",
-        "detail": "1-2 sentences with session number citations",
-        "clinicalImplication": "1 sentence clinical meaning"
-      }
-    ],
-    "treatmentPlanProgress": [
-      {
-        "objectiveId": "obj-X",
-        "objective": "objective text",
-        "status": "on-track | in-progress | stalled | at-risk | achieved",
-        "progressPercent": 0-100,
-        "evidence": "1 sentence with session references"
-      }
-    ],
-    "suggestedFocus": [
-      "2-4 specific suggestions, each starting with 'Consider...' (max 20 words each)"
-    ],
-    "strengthsToReinforce": [
-      "1-2 strengths (max 15 words each)"
-    ]
-  }
+  "clientSnapshot": "2-3 sentences: who this client is and where they are right now in their program.",
+  "recentTrajectory": "3-4 sentences: what's been happening across the most recent sessions. Include mood/engagement trend.",
+  "patternAlerts": [
+    {
+      "type": "concern | positive | neutral",
+      "pattern": "describe the cross-session pattern — cite specific session numbers",
+      "clinicalImplication": "what this might mean clinically"
+    }
+  ],
+  "treatmentPlanProgress": [
+    {
+      "objectiveId": "obj-X",
+      "objective": "the objective text",
+      "status": "on-track | in-progress | stalled | at-risk | achieved",
+      "evidence": "1-2 sentences explaining the status based on session data"
+    }
+  ],
+  "suggestedFocus": [
+    "2-4 specific, actionable suggestions for the upcoming session, each grounded in session data or evidence-based practice. Start each with 'Consider...' or 'You might...'"
+  ],
+  "strengthsToReinforce": [
+    "1-2 positive things the counselor should acknowledge or build on"
+  ]
 }`;
 
   return { systemPrompt, userPrompt };

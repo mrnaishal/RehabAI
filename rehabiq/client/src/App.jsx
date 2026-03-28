@@ -16,13 +16,15 @@ export default function App() {
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <Sidebar currentView={view} onNavigate={navigateTo} />
+      <Sidebar
+        currentView={view}
+        onNavigate={navigateTo}
+      />
       <main className="flex-1 overflow-y-auto">
         {view === "dashboard" && (
           <Dashboard
             onSelectClient={(id) => navigateTo("client", id)}
             onDocumentSession={(id) => navigateTo("session", id)}
-            onAddClient={() => navigateTo("newclient")}
           />
         )}
         {view === "session" && (
@@ -37,12 +39,6 @@ export default function App() {
             clientId={selectedClientId}
             onBack={() => navigateTo("dashboard")}
             onDocumentSession={(id) => navigateTo("session", id)}
-          />
-        )}
-        {view === "newclient" && (
-          <NewClient
-            onBack={() => navigateTo("dashboard")}
-            onClientCreated={(id) => navigateTo("client", id)}
           />
         )}
       </main>
