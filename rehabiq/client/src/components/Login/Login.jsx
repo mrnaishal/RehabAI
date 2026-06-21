@@ -366,6 +366,70 @@ export default function Login({ onLoggedIn, darkMode, onToggleDark }) {
                 {submitting ? (isSignUp ? "Creating account…" : "Signing in…") : (isSignUp ? "Sign up" : "Sign in")}
               </button>
             </form>
+
+            {!isSignUp && (
+              <>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", margin: "20px 0 16px" }}>
+                  <div style={{ flex: 1, height: "1px", background: "var(--clr-border)" }} />
+                  <span style={{ fontSize: "11px", color: "var(--text-muted)", fontFamily: "'DM Sans', system-ui, sans-serif", whiteSpace: "nowrap" }}>
+                    or skip straight to the demo
+                  </span>
+                  <div style={{ flex: 1, height: "1px", background: "var(--clr-border)" }} />
+                </div>
+                <button
+                  type="button"
+                  disabled={submitting}
+                  onClick={async () => {
+                    setError("");
+                    setSubmitting(true);
+                    try {
+                      await login("rivera@rehab.com", "password");
+                      onLoggedIn();
+                    } catch (err) {
+                      setError(err.message || "Could not sign in");
+                    } finally {
+                      setSubmitting(false);
+                    }
+                  }}
+                  style={{
+                    width: "100%",
+                    padding: "11px 16px",
+                    borderRadius: "12px",
+                    border: "1.5px solid var(--clr-border)",
+                    cursor: submitting ? "wait" : "pointer",
+                    fontFamily: "'DM Sans', system-ui, sans-serif",
+                    fontWeight: 600,
+                    fontSize: "14px",
+                    color: "var(--green-dark)",
+                    background: "var(--bg-page)",
+                    transition: "border-color 0.2s ease, transform 0.15s ease, box-shadow 0.15s ease",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!submitting) {
+                      e.currentTarget.style.borderColor = "var(--green-accent)";
+                      e.currentTarget.style.transform = "translateY(-1px)";
+                      e.currentTarget.style.boxShadow = "0 4px 12px rgba(82,183,136,0.15)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = "var(--clr-border)";
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "none";
+                  }}
+                >
+                  {submitting ? "Entering…" : (
+                    <>
+                      <span style={{ fontSize: "15px" }}>▶</span>
+                      Try Demo — no account needed
+                    </>
+                  )}
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
