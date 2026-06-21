@@ -55,7 +55,7 @@ router.get("/:clientId", async (req, res) => {
     console.log(`\n📊 Analyzing outcomes for ${client.name} (${sessionCount} sessions)...`);
 
     const message = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-sonnet-4-6",
       max_tokens: 3000,
       system: systemPrompt,
       messages: [{ role: "user", content: userPrompt }],
